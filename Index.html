@@ -1,0 +1,122 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prop Director Web</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #222;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    .section {
+      padding: 1rem;
+      border-bottom: 1px solid #333;
+    }
+    label, input, button, select {
+      display: block;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+    }
+    .timeline {
+      border: 1px solid #555;
+      margin-top: 1rem;
+      height: 100px;
+      position: relative;
+      background: #222;
+    }
+    .event {
+      position: absolute;
+      width: 10px;
+      height: 100%;
+      background: lime;
+    }
+    .event::after {
+      content: attr(data-label);
+      position: absolute;
+      top: -1.5rem;
+      left: -5px;
+      background: #000;
+      padding: 0 5px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <header>Prop Director Web</header>  <div class="section">
+    <h2>1. Upload Audio</h2>
+    <label>Background Track (MP3): <input type="file" accept="audio/mp3" id="bgTrack"></label>
+    <label>Scare Track (MP3): <input type="file" accept="audio/mp3" id="scareTrack"></label>
+    <audio id="audioPlayer" controls style="margin-top: 1rem; display: none;"></audio>
+    <button onclick="playScare()">Preview Scare Track</button>
+  </div>  <div class="section">
+    <h2>2. Inputs and Outputs</h2>
+    <label>Trigger Input Pin: <input type="number" id="inputPin" value="13"></label>
+    <label>Output Pins (comma-separated): <input type="text" id="outputPins" value="16,17,18,19"></label>
+  </div>  <div class="section">
+    <h2>3. Timeline Editor</h2>
+    <label>Output Label: <input type="text" id="outputLabel" placeholder="e.g. Strobe"></label>
+    <div id="timeline" class="timeline"></div>
+    <button onclick="addEvent()">Add Output Event</button>
+  </div>  <div class="section">
+    <h2>4. Export Files</h2>
+    <button onclick="exportConfig()">Download Config</button>
+  </div>  <script>
+    const timeline = document.getElementById('timeline');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const scareTrackInput = document.getElementById('scareTrack');
+
+    scareTrackInput.addEventListener('change', function() {
+      if (this.files[0]) {
+        const url = URL.createObjectURL(this.files[0]);
+        audioPlayer.src = url;
+        audioPlayer.style.display = 'block';
+      }
+    });
+
+    function playScare() {
+      if (audioPlayer.src) {
+        audioPlayer.currentTime = 0;
+        audioPlayer.play();
+      } else {
+        alert("Please upload a scare track first.");
+      }
+    }
+
+    function addEvent() {
+      const label = document.getElementById('outputLabel').value || 'Output';
+      const event = document.createElement('div');
+      event.className = 'event';
+      event.style.left = Math.random() * 90 + '%';
+      event.dataset.label = label;
+      timeline.appendChild(event);
+    }
+
+    function exportConfig() {
+      const inputPin = document.getElementById('inputPin').value;
+      const outputPins = document.getElementById('outputPins').value.split(',').map(p => parseInt(p.trim()));
+      const events = [...timeline.querySelectorAll('.event')].map(e => {
+        return { time: parseFloat(e.style.left), label: e.dataset.label };
+      });
+      const config = {
+        inputPin,
+        outputPins,
+        events
+      };
+      const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'config.json';
+      a.click();
+    }
+  </script></body>
+</html>
